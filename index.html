@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Indie Flower">
+    <title>weather</title>
+    <style media="screen">
+
+    body, html {
+      background: linear-gradient(to right, rgb(255, 167, 35), rgb(255, 97, 35));
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 0;
+      /* font-family: sans-serif; */
+
+    }
+
+    h1 {
+      color: Black;
+      padding-top: 1em;
+      text-align: center;
+      font-weight: bold;
+      font-family: "Indie Flower";
+      text-shadow: 2px 2px 4px white;
+    }
+    #findLocation{
+      color: #581378;
+    }
+
+    h2{
+      text-align: center;
+      font-family: "Indie Flower";
+    }
+
+    p {
+      padding: 1em;
+      text-align: center;
+      font-size: 17px;
+
+    }
+
+    #status{
+      color: #AA70C5;
+      font-family:sans-serif;
+    }
+
+    img{
+      align-items: center;
+      justify-content: center;
+    }
+
+    .center {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+    .container{
+      display: flex;
+  align-items: center;
+  padding-bottom: 2em;
+    }
+
+      #weatherBug{
+        border: 6px solid #4C659B;
+        border-radius: 10em;
+        background-color: #4C659B;
+        width: 30em;
+        height:17em;
+        padding: 1em;
+        color: white;
+        font-family: sans-serif;
+        box-shadow: 3px 4px #10125D;
+
+      }
+
+      main {
+        /* thing to center */
+        box-shadow: 5px 7px gray;
+        border-radius: 2em;
+
+        margin: auto;
+        padding: 7em;
+        padding-bottom: 3em;
+        padding-top: 3em;
+        background-color: white;
+      }
+
+
+
+      button {
+        /* justify-content: flex;
+        align-items: center; */
+
+  padding: 15px 215px;
+  font-size: 24px;
+  font-family: "Indie Flower";
+  text-align: center;
+  cursor: pointer;
+  outline: none;
+  color: #fff;
+  background-color: #AAD8E8;
+  border: none;
+  border-radius: 50px;
+  box-shadow: 0 8px #999;
+}
+
+button:hover {background-color: #98D1E6}
+
+button:active {
+  background-color: #AAD8E8;
+  box-shadow: 0 5px #666;
+  transform: translateY(4px);
+}
+
+
+
+    </style>
+  </head>
+
+  <body>
+      <h1>What is the Weather Today?</h1>
+    <div class="container">
+    <main>
+
+    <button id="findLocation">
+      <i class="fa fa-spinner fa-spin"></i><br>Click Me</br></button>
+    <p id="status">No location yet</p>
+
+    <div id="weatherBug">
+  <img src="http://openweathermap.org/img/wn/03d@2x.png" class="center">
+      <h2>Weather Bug</h2>
+      <p>No Weather Data</p>
+    </div>
+  </main>
+</div>
+
+    <script src="openWeatherAPIKey.js" charset="utf-8"></script>
+    <script type="text/javascript">
+
+
+//////////////////// Geolocation////////////////////
+
+document.querySelector('#findLocation').addEventListener('click', geoLookUp, false)
+
+function geoLookUp() {
+  const status = document.querySelector('#status')
+
+  function success(position) {
+    const latitude = position.coords.latitude
+    const longitude = position.coords.longitude
+    status.textContent = `Lat: ${latitude},  Lon: ${longitude}`
+    setWeather(latitude, longitude)
+  }
+
+  function error(err) {
+    status.textContent = `Unable to retrieve your location. Error: ${err.code}. ${err.message}`
+  }
+
+  if (!navigator.geolocation) {
+    status.texContent = "Geolocation is not supported or allowed by your browser"
+  } else {
+    status.textContent = "Locating..."
+    navigator.geolocation.getCurrentPosition(success, error)
+  }
+}
+
+
+    ///////////////// weather bug/////////////////////
+
+
+    function setWeather(latitude, longitude){
+
+      const p = document.querySelector('#weatherBug p')
+
+      let openWeatherData = {}
+      let xhr = new XMLHttpRequest()
+
+      xhr.open('GET', `http://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${openWeatherKey}&units=imperial`)
+
+      xhr.responseType = 'text'
+
+      xhr.addEventListener('load', function(){
+        if (xhr.status ===200){
+            p.textContent = "loading..."
+            openWeatherData = JSON.parse(xhr.responseText)
+            populateWeathereInfo(openWeatherData, p)
+        }else {
+          p.textContent = "error: " + xhr.status
+        }
+      },false)
+
+      xhr.send()
+    }
+
+
+
+    function populateWeathereInfo(openWeatherData, p){
+
+      //////// name, temp, wind, time
+      const location = openWeatherData.name
+      const temp = Math.round(openWeatherData.main.temp)
+      const wind = Math.round(openWeatherData.wind.speed)
+      const time = new Date(openWeatherData.dt * 1000)
+      const hrs = time.getHours()
+      let mins = time.getMinutes()
+
+      let timeString = ''
+
+
+      if (mins<10){
+        mins = `0${mins}`
+      }
+
+      if (hrs ===12){
+        timeString = `12:${mins} PM`
+      }else if(hrs > 12) {
+        timeString = `${hrs - 12}:${mins} PM`
+      }else if (hrs === 0) {
+        timeString = `12:${mins} AM`
+      }else{
+        timeString = `${hrs}:${mins} AM`
+      }
+
+      const str = `${location}  ${temp}&#0176;<br>wind: ${wind}mph<br>${timeString}`
+      p.innerHTML = str
+    }
+
+
+    </script>
+  </body>
+</html>
